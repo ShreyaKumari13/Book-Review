@@ -24,8 +24,8 @@ export class ReviewModel {
    */
   static async create(reviewData: ReviewInput): Promise<Review> {
     const result = await query(
-      `INSERT INTO reviews (book_id, user_id, rating, comment) 
-       VALUES ($1, $2, $3, $4) 
+      `INSERT INTO reviews (book_id, user_id, rating, comment)
+       VALUES ($1, $2, $3, $4)
        RETURNING id, book_id, user_id, rating, comment, created_at, updated_at`,
       [
         reviewData.book_id,
@@ -76,9 +76,9 @@ export class ReviewModel {
     }
 
     const result = await query(
-      `UPDATE reviews 
-       SET ${updateFields.join(', ')} 
-       WHERE id = $1 AND user_id = $2 
+      `UPDATE reviews
+       SET ${updateFields.join(', ')}
+       WHERE id = $1 AND user_id = $2
        RETURNING id, book_id, user_id, rating, comment, created_at, updated_at`,
       queryParams
     );
@@ -87,12 +87,24 @@ export class ReviewModel {
   }
 
   /**
-   * Delete a review
+   * Delete a review (only if it belongs to the user)
    */
   static async delete(id: number, userId: number): Promise<boolean> {
     const result = await query(
       'DELETE FROM reviews WHERE id = $1 AND user_id = $2 RETURNING id',
       [id, userId]
+    );
+
+    return result.rows.length > 0;
+  }
+
+  /**
+   * Delete any review by ID (for testing purposes only)
+   */
+  static async deleteAny(id: number): Promise<boolean> {
+    const result = await query(
+      'DELETE FROM reviews WHERE id = $1 RETURNING id',
+      [id]
     );
 
     return result.rows.length > 0;

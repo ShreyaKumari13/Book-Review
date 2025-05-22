@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { BookModel } from '../../../models/Book';
 import { ReviewModel } from '../../../models/Review';
+import { verifyToken, extractTokenFromHeader } from '../../../lib/auth';
 
 export default async function handler(
   req: NextApiRequest,
@@ -31,6 +32,28 @@ export default async function handler(
 
       const reviewsResult = await ReviewModel.getByBookId(bookId, page, limit);
 
+      // Try to get current user from token (if available)
+      let currentUser = null;
+      try {
+        const authHeader = req.headers.authorization;
+        if (authHeader) {
+          const token = extractTokenFromHeader(authHeader);
+          if (token) {
+            const decodedToken = verifyToken(token);
+            if (decodedToken) {
+              currentUser = {
+                id: decodedToken.userId,
+                name: decodedToken.name,
+                email: decodedToken.email
+              };
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error extracting user from token:', error);
+        // Don't fail the request if we can't get the user
+      }
+
       res.status(200).json({
         book,
         reviews: reviewsResult.reviews,
@@ -39,7 +62,8 @@ export default async function handler(
           page,
           limit,
           totalPages: Math.ceil(reviewsResult.total / limit)
-        }
+        },
+        currentUser
       });
     } catch (error) {
       console.error('Error fetching book details:', error);

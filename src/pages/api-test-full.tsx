@@ -519,24 +519,59 @@ export default function ApiTestFull() {
 
         const data = await response.json();
 
-        if (data.book && data.book.reviews && data.book.reviews.length > 0) {
-          // Find the first review by the current user
-          const userReview = data.book.reviews.find((review: any) => review.user_id === data.currentUser?.id);
+        // Log the full response data for debugging
+        addResult('Book details retrieved for update', {
+          bookId: bookIdToUse,
+          hasReviews: !!(data.book && data.book.reviews && data.book.reviews.length > 0),
+          reviewCount: data.book?.reviews?.length || 0,
+          currentUser: data.currentUser || null
+        });
 
-          if (userReview) {
-            idToUse = userReview.id;
+        if (data.book && data.book.reviews && data.book.reviews.length > 0) {
+          // Show all reviews for debugging
+          addResult('All reviews for this book', {
+            reviews: data.book.reviews.map((r: any) => ({
+              id: r.id,
+              user_id: r.user_id,
+              rating: r.rating,
+              comment: r.comment?.substring(0, 20) + '...'
+            }))
+          });
+
+          // If we're logged in, try to find our review
+          if (data.currentUser && data.currentUser.id) {
+            const userReview = data.book.reviews.find((review: any) => review.user_id === data.currentUser.id);
+
+            if (userReview) {
+              idToUse = userReview.id;
+              setReviewId(idToUse);
+              addResult('Found your review for this book', {
+                bookId: bookIdToUse,
+                reviewId: idToUse,
+                message: 'Successfully found your review for this book'
+              });
+            } else {
+              // If we can't find a review by the current user, just use the first review
+              // This is for testing purposes - in a real app, you'd only allow users to update their own reviews
+              const firstReview = data.book.reviews[0];
+              idToUse = firstReview.id;
+              setReviewId(idToUse);
+              addResult('Using first available review', {
+                bookId: bookIdToUse,
+                reviewId: idToUse,
+                message: 'Could not find your review, using the first review for this book instead'
+              });
+            }
+          } else {
+            // If we're not logged in or can't determine the current user, just use the first review
+            const firstReview = data.book.reviews[0];
+            idToUse = firstReview.id;
             setReviewId(idToUse);
-            addResult('Found review ID for book', {
+            addResult('Using first available review', {
               bookId: bookIdToUse,
               reviewId: idToUse,
-              message: 'Successfully found your review for this book'
+              message: 'Using the first review for this book'
             });
-          } else {
-            addResult('No review found for this book', {
-              bookId: bookIdToUse,
-              message: 'You have not reviewed this book yet. Please add a review first.'
-            });
-            return;
           }
         } else {
           addResult('No reviews found for this book', {
@@ -674,24 +709,59 @@ export default function ApiTestFull() {
 
         const data = await response.json();
 
-        if (data.book && data.book.reviews && data.book.reviews.length > 0) {
-          // Find the first review by the current user
-          const userReview = data.book.reviews.find((review: any) => review.user_id === data.currentUser?.id);
+        // Log the full response data for debugging
+        addResult('Book details retrieved', {
+          bookId: bookIdToUse,
+          hasReviews: !!(data.book && data.book.reviews && data.book.reviews.length > 0),
+          reviewCount: data.book?.reviews?.length || 0,
+          currentUser: data.currentUser || null
+        });
 
-          if (userReview) {
-            idToUse = userReview.id;
+        if (data.book && data.book.reviews && data.book.reviews.length > 0) {
+          // Show all reviews for debugging
+          addResult('All reviews for this book', {
+            reviews: data.book.reviews.map((r: any) => ({
+              id: r.id,
+              user_id: r.user_id,
+              rating: r.rating,
+              comment: r.comment?.substring(0, 20) + '...'
+            }))
+          });
+
+          // If we're logged in, try to find our review
+          if (data.currentUser && data.currentUser.id) {
+            const userReview = data.book.reviews.find((review: any) => review.user_id === data.currentUser.id);
+
+            if (userReview) {
+              idToUse = userReview.id;
+              setReviewId(idToUse);
+              addResult('Found your review for this book', {
+                bookId: bookIdToUse,
+                reviewId: idToUse,
+                message: 'Successfully found your review for this book'
+              });
+            } else {
+              // If we can't find a review by the current user, just use the first review
+              // This is for testing purposes - in a real app, you'd only allow users to delete their own reviews
+              const firstReview = data.book.reviews[0];
+              idToUse = firstReview.id;
+              setReviewId(idToUse);
+              addResult('Using first available review', {
+                bookId: bookIdToUse,
+                reviewId: idToUse,
+                message: 'Could not find your review, using the first review for this book instead'
+              });
+            }
+          } else {
+            // If we're not logged in or can't determine the current user, just use the first review
+            const firstReview = data.book.reviews[0];
+            idToUse = firstReview.id;
             setReviewId(idToUse);
-            addResult('Found review ID for book', {
+            addResult('Using first available review', {
               bookId: bookIdToUse,
               reviewId: idToUse,
-              message: 'Successfully found your review for this book'
+              message: 'Using the first review for this book'
             });
-          } else {
-            addResult('No review found for this book', {
-              bookId: bookIdToUse,
-              message: 'You have not reviewed this book yet. Please add a review first.'
-            });
-            return;
           }
         } else {
           addResult('No reviews found for this book', {
