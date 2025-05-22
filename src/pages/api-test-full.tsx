@@ -488,16 +488,9 @@ export default function ApiTestFull() {
 
   // Update a review
   const updateReview = async () => {
-    // Use the review ID from the input field if available, otherwise use the stored reviewId
-    const idToUse = reviewDetailsInput.reviewId ? parseInt(reviewDetailsInput.reviewId) : reviewId;
-
-    if (!idToUse) {
-      addResult('Cannot update review', {
-        error: 'No review ID available',
-        message: 'Please enter a review ID in the Review Details Input field or add a review first'
-      });
-      return;
-    }
+    // Check if we have a book ID but no review ID
+    const bookIdToUse = bookDetailsInput.bookId ? parseInt(bookDetailsInput.bookId) : bookId;
+    let idToUse = reviewDetailsInput.reviewId ? parseInt(reviewDetailsInput.reviewId) : reviewId;
 
     if (!token) {
       addResult('Cannot update review', {
@@ -507,12 +500,72 @@ export default function ApiTestFull() {
       return;
     }
 
+    // If we have a book ID but no review ID, try to find the review ID for this book
+    if (bookIdToUse && !idToUse) {
+      addResult('Looking up review ID for book', {
+        bookId: bookIdToUse,
+        message: 'Attempting to find your review for this book'
+      });
+
+      try {
+        // First, get the book details which should include reviews
+        const response = await fetch(`/api/books/${bookIdToUse}`);
+
+        if (!response.ok) {
+          throw new Error(`Failed to get book with ID ${bookIdToUse}`);
+        }
+
+        const data = await response.json();
+
+        if (data.book && data.book.reviews && data.book.reviews.length > 0) {
+          // Find the first review by the current user
+          const userReview = data.book.reviews.find((review: any) => review.user_id === data.currentUser?.id);
+
+          if (userReview) {
+            idToUse = userReview.id;
+            setReviewId(idToUse);
+            addResult('Found review ID for book', {
+              bookId: bookIdToUse,
+              reviewId: idToUse,
+              message: 'Successfully found your review for this book'
+            });
+          } else {
+            addResult('No review found for this book', {
+              bookId: bookIdToUse,
+              message: 'You have not reviewed this book yet. Please add a review first.'
+            });
+            return;
+          }
+        } else {
+          addResult('No reviews found for this book', {
+            bookId: bookIdToUse,
+            message: 'This book has no reviews yet. Please add a review first.'
+          });
+          return;
+        }
+      } catch (error) {
+        addResult('Error finding review for book', {
+          error: error instanceof Error ? error.message : String(error),
+          bookId: bookIdToUse
+        });
+        return;
+      }
+    }
+
+    if (!idToUse) {
+      addResult('Cannot update review', {
+        error: 'No review ID available',
+        message: 'Please enter a review ID in the Review Details Input field, or a book ID to find your review for that book'
+      });
+      return;
+    }
+
     // Update the stored reviewId to match what we're using
     if (reviewId !== idToUse) {
       setReviewId(idToUse);
       addResult('Updated review ID for operation', {
         reviewId: idToUse,
-        message: 'Using the review ID from the input field'
+        message: 'Using the review ID from the input field or found from book ID'
       });
     }
 
@@ -585,16 +638,9 @@ export default function ApiTestFull() {
 
   // Delete a review
   const deleteReview = async () => {
-    // Use the review ID from the input field if available, otherwise use the stored reviewId
-    const idToUse = reviewDetailsInput.reviewId ? parseInt(reviewDetailsInput.reviewId) : reviewId;
-
-    if (!idToUse) {
-      addResult('Cannot delete review', {
-        error: 'No review ID available',
-        message: 'Please enter a review ID in the Review Details Input field or add a review first'
-      });
-      return;
-    }
+    // Check if we have a book ID but no review ID
+    const bookIdToUse = bookDetailsInput.bookId ? parseInt(bookDetailsInput.bookId) : bookId;
+    let idToUse = reviewDetailsInput.reviewId ? parseInt(reviewDetailsInput.reviewId) : reviewId;
 
     if (!token) {
       addResult('Cannot delete review', {
@@ -604,12 +650,72 @@ export default function ApiTestFull() {
       return;
     }
 
+    // If we have a book ID but no review ID, try to find the review ID for this book
+    if (bookIdToUse && !idToUse) {
+      addResult('Looking up review ID for book', {
+        bookId: bookIdToUse,
+        message: 'Attempting to find your review for this book'
+      });
+
+      try {
+        // First, get the book details which should include reviews
+        const response = await fetch(`/api/books/${bookIdToUse}`);
+
+        if (!response.ok) {
+          throw new Error(`Failed to get book with ID ${bookIdToUse}`);
+        }
+
+        const data = await response.json();
+
+        if (data.book && data.book.reviews && data.book.reviews.length > 0) {
+          // Find the first review by the current user
+          const userReview = data.book.reviews.find((review: any) => review.user_id === data.currentUser?.id);
+
+          if (userReview) {
+            idToUse = userReview.id;
+            setReviewId(idToUse);
+            addResult('Found review ID for book', {
+              bookId: bookIdToUse,
+              reviewId: idToUse,
+              message: 'Successfully found your review for this book'
+            });
+          } else {
+            addResult('No review found for this book', {
+              bookId: bookIdToUse,
+              message: 'You have not reviewed this book yet. Please add a review first.'
+            });
+            return;
+          }
+        } else {
+          addResult('No reviews found for this book', {
+            bookId: bookIdToUse,
+            message: 'This book has no reviews yet. Please add a review first.'
+          });
+          return;
+        }
+      } catch (error) {
+        addResult('Error finding review for book', {
+          error: error instanceof Error ? error.message : String(error),
+          bookId: bookIdToUse
+        });
+        return;
+      }
+    }
+
+    if (!idToUse) {
+      addResult('Cannot delete review', {
+        error: 'No review ID available',
+        message: 'Please enter a review ID in the Review Details Input field, or a book ID to find your review for that book'
+      });
+      return;
+    }
+
     // Update the stored reviewId to match what we're using
     if (reviewId !== idToUse) {
       setReviewId(idToUse);
       addResult('Updated review ID for operation', {
         reviewId: idToUse,
-        message: 'Using the review ID from the input field'
+        message: 'Using the review ID from the input field or found from book ID'
       });
     }
 
@@ -815,21 +921,29 @@ export default function ApiTestFull() {
               )}
             </button>
             <button
-              className={`${!token || (!reviewId && !reviewDetailsInput.reviewId) ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'} text-white px-4 py-2 rounded flex items-center justify-center relative`}
+              className={`${!token || (!reviewId && !reviewDetailsInput.reviewId && !bookId && !bookDetailsInput.bookId) ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'} text-white px-4 py-2 rounded flex items-center justify-center relative`}
               onClick={updateReview}
-              disabled={loading || !token || (!reviewId && !reviewDetailsInput.reviewId)}
+              disabled={loading || !token || (!reviewId && !reviewDetailsInput.reviewId && !bookId && !bookDetailsInput.bookId)}
             >
               <span className="mr-2">7. Update Review</span>
               {!token && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">Login Required</span>}
-              {!reviewId && !reviewDetailsInput.reviewId && token && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Review ID Required</span>}
-              {token && (reviewId || reviewDetailsInput.reviewId) && !loading && (
+              {!reviewId && !reviewDetailsInput.reviewId && !bookId && !bookDetailsInput.bookId && token &&
+                <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Review ID or Book ID Required</span>
+              }
+              {token && (reviewId || reviewDetailsInput.reviewId || bookId || bookDetailsInput.bookId) && !loading && (
                 <>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                   </svg>
-                  <span className="absolute -top-1 -right-1 text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full">
-                    PUT /reviews/{reviewDetailsInput.reviewId || reviewId}
-                  </span>
+                  {(reviewId || reviewDetailsInput.reviewId) ? (
+                    <span className="absolute -top-1 -right-1 text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full">
+                      PUT /reviews/{reviewDetailsInput.reviewId || reviewId}
+                    </span>
+                  ) : (
+                    <span className="absolute -top-1 -right-1 text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full">
+                      Using Book ID: {bookDetailsInput.bookId || bookId}
+                    </span>
+                  )}
                 </>
               )}
             </button>
@@ -841,21 +955,29 @@ export default function ApiTestFull() {
               8. Search Books
             </button>
             <button
-              className={`${!token || (!reviewId && !reviewDetailsInput.reviewId) ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600'} text-white px-4 py-2 rounded flex items-center justify-center relative`}
+              className={`${!token || (!reviewId && !reviewDetailsInput.reviewId && !bookId && !bookDetailsInput.bookId) ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600'} text-white px-4 py-2 rounded flex items-center justify-center relative`}
               onClick={deleteReview}
-              disabled={loading || !token || (!reviewId && !reviewDetailsInput.reviewId)}
+              disabled={loading || !token || (!reviewId && !reviewDetailsInput.reviewId && !bookId && !bookDetailsInput.bookId)}
             >
               <span className="mr-2">9. Delete Review</span>
               {!token && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">Login Required</span>}
-              {!reviewId && !reviewDetailsInput.reviewId && token && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Review ID Required</span>}
-              {token && (reviewId || reviewDetailsInput.reviewId) && !loading && (
+              {!reviewId && !reviewDetailsInput.reviewId && !bookId && !bookDetailsInput.bookId && token &&
+                <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Review ID or Book ID Required</span>
+              }
+              {token && (reviewId || reviewDetailsInput.reviewId || bookId || bookDetailsInput.bookId) && !loading && (
                 <>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
-                  <span className="absolute -top-1 -right-1 text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full">
-                    DELETE /reviews/{reviewDetailsInput.reviewId || reviewId}
-                  </span>
+                  {(reviewId || reviewDetailsInput.reviewId) ? (
+                    <span className="absolute -top-1 -right-1 text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full">
+                      DELETE /reviews/{reviewDetailsInput.reviewId || reviewId}
+                    </span>
+                  ) : (
+                    <span className="absolute -top-1 -right-1 text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full">
+                      Using Book ID: {bookDetailsInput.bookId || bookId}
+                    </span>
+                  )}
                 </>
               )}
             </button>
@@ -1063,6 +1185,13 @@ export default function ApiTestFull() {
                     </button>
                   </div>
                 </div>
+              </div>
+              <div className="mt-3 p-2 bg-blue-50 rounded border border-blue-200">
+                <h4 className="text-sm font-semibold text-blue-800">New Feature!</h4>
+                <p className="text-xs text-blue-700 mt-1">
+                  You can now use either a Review ID or a Book ID to update/delete reviews. If you provide a Book ID (in the Book Details Input above)
+                  but no Review ID, the system will automatically find your review for that book.
+                </p>
               </div>
             </div>
 
