@@ -633,7 +633,7 @@ export default function ApiTestFull() {
       // Create updated review data
       const updatedReview = {
         rating: ratingNum,
-        comment: `Updated: ${reviewForm.comment}`
+        comment: reviewForm.comment
       };
 
       addResult(`Updating review with ID ${idToUse}...`, {
