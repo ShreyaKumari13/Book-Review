@@ -510,7 +510,7 @@ export default function ApiTestFull() {
               onClick={login}
               disabled={loading || !!token}
             >
-              <span className="mr-2">3. Login</span>
+              <span className="mr-2">2. Login</span>
               {!token && !loading && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v14a1 1 0 01-1 1H4a1 1 0 01-1-1V3zm5 10V7l5 3-5 3z" clipRule="evenodd" />
               </svg>}
@@ -523,7 +523,7 @@ export default function ApiTestFull() {
               onClick={logout}
               disabled={loading || !token}
             >
-              <span className="mr-2">3a. Logout</span>
+              <span className="mr-2">2a. Logout</span>
               {token && !loading && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4a1 1 0 10-2 0v4a1 1 0 102 0V7z" clipRule="evenodd" />
               </svg>}
@@ -533,7 +533,7 @@ export default function ApiTestFull() {
               onClick={addBooks}
               disabled={loading || !token}
             >
-              <span className="mr-2">4. Add Book</span>
+              <span className="mr-2">3. Add Book</span>
               {!token && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">Login Required</span>}
               {token && !loading && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
@@ -546,14 +546,14 @@ export default function ApiTestFull() {
               onClick={getBooks}
               disabled={loading}
             >
-              5. Get Books (with filters)
+              4. Get Books (with filters)
             </button>
             <button
               className="bg-blue-500 text-white px-4 py-2 rounded flex items-center justify-center"
               onClick={getBook}
               disabled={loading}
             >
-              <span className="mr-2">6. Get Book Details</span>
+              <span className="mr-2">5. Get Book Details</span>
               {(bookId || bookDetailsInput.bookId) && (
                 <span className="text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full">
                   ID: {bookDetailsInput.bookId || bookId}
@@ -570,7 +570,7 @@ export default function ApiTestFull() {
               onClick={addReview}
               disabled={loading || !token || !bookId}
             >
-              <span className="mr-2">7. Add Review</span>
+              <span className="mr-2">6. Add Review</span>
               {!token && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">Login Required</span>}
               {!bookId && token && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Book ID Required</span>}
               {token && bookId && !loading && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -582,7 +582,7 @@ export default function ApiTestFull() {
               onClick={updateReview}
               disabled={loading || !token || !reviewId}
             >
-              <span className="mr-2">8. Update Review</span>
+              <span className="mr-2">7. Update Review</span>
               {!token && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">Login Required</span>}
               {!reviewId && token && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Review ID Required</span>}
               {token && reviewId && !loading && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -594,14 +594,14 @@ export default function ApiTestFull() {
               onClick={searchBooks}
               disabled={loading}
             >
-              9. Search Books
+              8. Search Books
             </button>
             <button
               className={`${!token || !reviewId ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600'} text-white px-4 py-2 rounded flex items-center justify-center`}
               onClick={deleteReview}
               disabled={loading || !token || !reviewId}
             >
-              <span className="mr-2">10. Delete Review</span>
+              <span className="mr-2">9. Delete Review</span>
               {!token && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">Login Required</span>}
               {!reviewId && token && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Review ID Required</span>}
               {token && reviewId && !loading && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
