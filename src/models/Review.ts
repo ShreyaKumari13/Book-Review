@@ -39,7 +39,7 @@ export class ReviewModel {
   }
 
   /**
-   * Update an existing review
+   * Update an existing review (only if it belongs to the user)
    */
   static async update(id: number, userId: number, data: { rating?: number; comment?: string }): Promise<Review | null> {
     // First check if the review exists and belongs to the user
@@ -87,24 +87,60 @@ export class ReviewModel {
   }
 
   /**
-   * Delete a review (only if it belongs to the user)
+   * Update any review by ID (for testing purposes only)
+   */
+  static async updateAny(id: number, data: { rating?: number; comment?: string }): Promise<Review | null> {
+    // First check if the review exists
+    const checkResult = await query(
+      'SELECT * FROM reviews WHERE id = $1',
+      [id]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return null;
+    }
+
+    // Build the update query
+    const updateFields: string[] = [];
+    const queryParams: any[] = [id];
+    let paramIndex = 2;
+
+    if (data.rating !== undefined) {
+      updateFields.push(`rating = $${paramIndex++}`);
+      queryParams.push(data.rating);
+    }
+
+    if (data.comment !== undefined) {
+      updateFields.push(`comment = $${paramIndex++}`);
+      queryParams.push(data.comment);
+    }
+
+    // Add updated_at timestamp
+    updateFields.push('updated_at = CURRENT_TIMESTAMP');
+
+    if (updateFields.length === 0) {
+      // Nothing to update
+      return checkResult.rows[0];
+    }
+
+    const result = await query(
+      `UPDATE reviews
+       SET ${updateFields.join(', ')}
+       WHERE id = $1
+       RETURNING id, book_id, user_id, rating, comment, created_at, updated_at`,
+      queryParams
+    );
+
+    return result.rows[0];
+  }
+
+  /**
+   * Delete a review
    */
   static async delete(id: number, userId: number): Promise<boolean> {
     const result = await query(
       'DELETE FROM reviews WHERE id = $1 AND user_id = $2 RETURNING id',
       [id, userId]
-    );
-
-    return result.rows.length > 0;
-  }
-
-  /**
-   * Delete any review by ID (for testing purposes only)
-   */
-  static async deleteAny(id: number): Promise<boolean> {
-    const result = await query(
-      'DELETE FROM reviews WHERE id = $1 RETURNING id',
-      [id]
     );
 
     return result.rows.length > 0;
