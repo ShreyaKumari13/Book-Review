@@ -1,6 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { UserModel, UserInput } from '../../models/User';
-import { generateToken } from '../../lib/auth';
 
 export default async function handler(
   req: NextApiRequest,
@@ -44,17 +43,9 @@ export default async function handler(
     // Create new user
     const newUser = await UserModel.create({ name, email, password });
 
-    // Generate JWT token
-    const token = generateToken({
-      id: newUser.id.toString(),
-      email: newUser.email,
-      name: newUser.name
-    });
-
-    // Return success response with token
+    // Return success response without token - user needs to login separately
     res.status(201).json({
-      message: 'User registered successfully',
-      token,
+      message: 'User registered successfully. Please login to continue.',
       user: {
         id: newUser.id,
         name: newUser.name,

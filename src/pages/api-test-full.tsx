@@ -400,37 +400,16 @@ export default function ApiTestFull() {
     }
   };
 
-  // Search query state
-  const [searchQuery, setSearchQuery] = useState('Gatsby');
-
-  // Handle search query change
-  const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
   // Search for books
   const searchBooks = async () => {
     setLoading(true);
     try {
-      if (!searchQuery.trim()) {
-        addResult('Error: Search query is empty', { error: 'Please enter a search term' });
-        setLoading(false);
-        return;
-      }
+      addResult('Searching for books with "Gatsby"...', null);
 
-      addResult(`Searching for books with "${searchQuery}"...`, { query: searchQuery });
-
-      // Encode the search query for URL
-      const encodedQuery = encodeURIComponent(searchQuery);
-      const response = await fetch(`/api/search?q=${encodedQuery}`);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to search books');
-      }
-
+      const response = await fetch('/api/search?q=Gatsby');
       const data = await response.json();
-      addResult(`Search results for "${searchQuery}"`, data);
+
+      addResult('Search results for "Gatsby"', data);
     } catch (error) {
       addResult('Error searching books', { error: error instanceof Error ? error.message : String(error) });
     } finally {
@@ -523,14 +502,14 @@ export default function ApiTestFull() {
               onClick={setupDatabase}
               disabled={loading}
             >
-              1. Setup Database
+              0. Setup Database
             </button>
             <button
               className="bg-blue-500 text-white px-4 py-2 rounded"
               onClick={registerUser}
               disabled={loading}
             >
-              2. Register User
+              1. Register User
             </button>
             <button
               className={`${token ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'} text-white px-4 py-2 rounded flex items-center justify-center`}
@@ -787,23 +766,6 @@ export default function ApiTestFull() {
                   <p className="text-xs text-gray-500 mt-1">
                     Enter a book ID to fetch specific book details, leave empty to use the current book ID, or leave empty with no current ID to get all books.
                   </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Search Parameters */}
-            <div className="border p-4 rounded mb-4">
-              <h3 className="font-semibold mb-2">Search Parameters</h3>
-              <div className="space-y-2">
-                <div>
-                  <label className="block text-sm mb-1">Search Query</label>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={handleSearchQueryChange}
-                    placeholder="Enter search term (title or author)"
-                    className="w-full p-2 border rounded"
-                  />
                 </div>
               </div>
             </div>
