@@ -497,13 +497,7 @@ export default function ApiTestFull() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left column - Test buttons */}
           <div className="grid grid-cols-1 gap-2">
-            <button
-              className="bg-blue-500 text-white px-4 py-2 rounded"
-              onClick={setupDatabase}
-              disabled={loading}
-            >
-              0. Setup Database
-            </button>
+            
             <button
               className="bg-blue-500 text-white px-4 py-2 rounded"
               onClick={registerUser}
