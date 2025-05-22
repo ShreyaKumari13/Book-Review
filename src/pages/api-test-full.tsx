@@ -45,6 +45,11 @@ export default function ApiTestFull() {
   // Search query state
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Review details input state
+  const [reviewDetailsInput, setReviewDetailsInput] = useState({
+    reviewId: ''
+  });
+
   // Handle user form input changes
   const handleUserFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -78,6 +83,12 @@ export default function ApiTestFull() {
   // Handle search query input change
   const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+  };
+
+  // Handle review details input changes
+  const handleReviewDetailsInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setReviewDetailsInput(prev => ({ ...prev, [name]: value }));
   };
 
   // Add a result to the results array
@@ -477,10 +488,13 @@ export default function ApiTestFull() {
 
   // Update a review
   const updateReview = async () => {
-    if (!reviewId) {
+    // Use the review ID from the input field if available, otherwise use the stored reviewId
+    const idToUse = reviewDetailsInput.reviewId ? parseInt(reviewDetailsInput.reviewId) : reviewId;
+
+    if (!idToUse) {
       addResult('Cannot update review', {
         error: 'No review ID available',
-        message: 'Please add a review first or select a book with your review'
+        message: 'Please enter a review ID in the Review Details Input field or add a review first'
       });
       return;
     }
@@ -491,6 +505,15 @@ export default function ApiTestFull() {
         message: 'Please login first'
       });
       return;
+    }
+
+    // Update the stored reviewId to match what we're using
+    if (reviewId !== idToUse) {
+      setReviewId(idToUse);
+      addResult('Updated review ID for operation', {
+        reviewId: idToUse,
+        message: 'Using the review ID from the input field'
+      });
     }
 
     setLoading(true);
@@ -511,13 +534,13 @@ export default function ApiTestFull() {
         comment: `Updated: ${reviewForm.comment}`
       };
 
-      addResult(`Updating review with ID ${reviewId}...`, {
-        endpoint: `/api/reviews/${reviewId}`,
+      addResult(`Updating review with ID ${idToUse}...`, {
+        endpoint: `/api/reviews/${idToUse}`,
         method: 'PUT',
         data: updatedReview
       });
 
-      const response = await fetch(`/api/reviews/${reviewId}`, {
+      const response = await fetch(`/api/reviews/${idToUse}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -562,10 +585,13 @@ export default function ApiTestFull() {
 
   // Delete a review
   const deleteReview = async () => {
-    if (!reviewId) {
+    // Use the review ID from the input field if available, otherwise use the stored reviewId
+    const idToUse = reviewDetailsInput.reviewId ? parseInt(reviewDetailsInput.reviewId) : reviewId;
+
+    if (!idToUse) {
       addResult('Cannot delete review', {
         error: 'No review ID available',
-        message: 'Please add a review first or select a book with your review'
+        message: 'Please enter a review ID in the Review Details Input field or add a review first'
       });
       return;
     }
@@ -578,14 +604,23 @@ export default function ApiTestFull() {
       return;
     }
 
+    // Update the stored reviewId to match what we're using
+    if (reviewId !== idToUse) {
+      setReviewId(idToUse);
+      addResult('Updated review ID for operation', {
+        reviewId: idToUse,
+        message: 'Using the review ID from the input field'
+      });
+    }
+
     setLoading(true);
     try {
-      addResult(`Deleting review with ID ${reviewId}...`, {
-        endpoint: `/api/reviews/${reviewId}`,
+      addResult(`Deleting review with ID ${idToUse}...`, {
+        endpoint: `/api/reviews/${idToUse}`,
         method: 'DELETE'
       });
 
-      const response = await fetch(`/api/reviews/${reviewId}`, {
+      const response = await fetch(`/api/reviews/${idToUse}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -780,23 +815,21 @@ export default function ApiTestFull() {
               )}
             </button>
             <button
-              className={`${!token || !reviewId ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'} text-white px-4 py-2 rounded flex items-center justify-center relative`}
+              className={`${!token || (!reviewId && !reviewDetailsInput.reviewId) ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'} text-white px-4 py-2 rounded flex items-center justify-center relative`}
               onClick={updateReview}
-              disabled={loading || !token || !reviewId}
+              disabled={loading || !token || (!reviewId && !reviewDetailsInput.reviewId)}
             >
               <span className="mr-2">7. Update Review</span>
               {!token && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">Login Required</span>}
-              {!reviewId && token && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Review ID Required</span>}
-              {token && reviewId && !loading && (
+              {!reviewId && !reviewDetailsInput.reviewId && token && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Review ID Required</span>}
+              {token && (reviewId || reviewDetailsInput.reviewId) && !loading && (
                 <>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                   </svg>
-                  {reviewId && (
-                    <span className="absolute -top-1 -right-1 text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full">
-                      PUT /reviews/{reviewId}
-                    </span>
-                  )}
+                  <span className="absolute -top-1 -right-1 text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full">
+                    PUT /reviews/{reviewDetailsInput.reviewId || reviewId}
+                  </span>
                 </>
               )}
             </button>
@@ -808,23 +841,21 @@ export default function ApiTestFull() {
               8. Search Books
             </button>
             <button
-              className={`${!token || !reviewId ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600'} text-white px-4 py-2 rounded flex items-center justify-center relative`}
+              className={`${!token || (!reviewId && !reviewDetailsInput.reviewId) ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600'} text-white px-4 py-2 rounded flex items-center justify-center relative`}
               onClick={deleteReview}
-              disabled={loading || !token || !reviewId}
+              disabled={loading || !token || (!reviewId && !reviewDetailsInput.reviewId)}
             >
               <span className="mr-2">9. Delete Review</span>
               {!token && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">Login Required</span>}
-              {!reviewId && token && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Review ID Required</span>}
-              {token && reviewId && !loading && (
+              {!reviewId && !reviewDetailsInput.reviewId && token && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Review ID Required</span>}
+              {token && (reviewId || reviewDetailsInput.reviewId) && !loading && (
                 <>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
-                  {reviewId && (
-                    <span className="absolute -top-1 -right-1 text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full">
-                      DELETE /reviews/{reviewId}
-                    </span>
-                  )}
+                  <span className="absolute -top-1 -right-1 text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full">
+                    DELETE /reviews/{reviewDetailsInput.reviewId || reviewId}
+                  </span>
                 </>
               )}
             </button>
@@ -956,7 +987,7 @@ export default function ApiTestFull() {
             </div>
 
             {/* Book Details Input */}
-            <div className="border p-4 rounded">
+            <div className="border p-4 rounded mb-4">
               <h3 className="font-semibold mb-2">Book Details Input</h3>
               <div className="space-y-2">
                 <div>
@@ -985,6 +1016,46 @@ export default function ApiTestFull() {
                       onClick={() => {
                         setBookDetailsInput({...bookDetailsInput, bookId: ''});
                         setBookId(null);
+                      }}
+                      className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded ml-2"
+                    >
+                      Clear ID
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Review Details Input */}
+            <div className="border p-4 rounded">
+              <h3 className="font-semibold mb-2">Review Details Input</h3>
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-sm mb-1">Review ID (for "Update/Delete Review") - Optional</label>
+                  <div className="flex items-center">
+                    <input
+                      type="number"
+                      name="reviewId"
+                      value={reviewDetailsInput.reviewId}
+                      onChange={handleReviewDetailsInputChange}
+                      min="1"
+                      placeholder={reviewId ? `Current: ${reviewId}` : "Enter review ID for update/delete"}
+                      className="w-full p-2 border rounded"
+                    />
+                    {reviewId && (
+                      <div className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                        Current: {reviewId}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <p className="text-xs text-gray-500">
+                      Enter a review ID to update or delete a specific review, or leave empty to use the current review ID.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setReviewDetailsInput({...reviewDetailsInput, reviewId: ''});
+                        setReviewId(null);
                       }}
                       className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded ml-2"
                     >
