@@ -474,6 +474,8 @@ export default function ApiTestFull() {
 
       if (data.review && data.review.id) {
         setReviewId(data.review.id);
+        // Update the review ID input field to match the new review ID
+        setReviewDetailsInput({...reviewDetailsInput, reviewId: data.review.id.toString()});
         addResult('Saved review ID for update/delete operations', {
           reviewId: data.review.id,
           message: 'You can now update or delete this review'
@@ -609,6 +611,11 @@ export default function ApiTestFull() {
       }
 
       addResult('Review updated successfully ✅', data);
+
+      // Update the input field to match the current review ID
+      if (reviewDetailsInput.reviewId !== idToUse.toString()) {
+        setReviewDetailsInput({...reviewDetailsInput, reviewId: idToUse.toString()});
+      }
     } catch (error) {
       addResult('Error updating review', { error: error instanceof Error ? error.message : String(error) });
     } finally {
@@ -741,8 +748,19 @@ export default function ApiTestFull() {
 
       addResult('Review deleted successfully ✅', data);
 
-      // Clear the review ID since it no longer exists
+      // Clear both the stored review ID and the input field since the review no longer exists
       setReviewId(null);
+      setReviewDetailsInput({...reviewDetailsInput, reviewId: ''});
+
+      // Also clear the book ID if we used it to find the review
+      if (!reviewDetailsInput.reviewId && bookIdToUse) {
+        setBookDetailsInput({...bookDetailsInput, bookId: ''});
+        setBookId(null);
+        addResult('Cleared book ID', {
+          message: 'The book ID has been cleared since the review has been deleted'
+        });
+      }
+
       addResult('Cleared review ID', {
         message: 'The review ID has been cleared since the review no longer exists'
       });
