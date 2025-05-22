@@ -306,15 +306,24 @@ export default function ApiTestFull() {
         const data = await response.json();
 
         addResult('All books (no specific ID provided)', data);
+
+        // Make it clear in the UI that we're showing all books
+        // We don't update the bookId state here since we're not selecting a specific book
       } else {
         // Get specific book by ID
         addResult(`Getting book with ID ${idToUse}...`, null);
 
         const response = await fetch(`/api/books/${idToUse}`);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Failed to get book with ID ${idToUse}`);
+        }
+
         const data = await response.json();
 
         // If using the input field and the request was successful, update the stored bookId
-        if (bookDetailsInput.bookId && response.ok && data.book) {
+        if (bookDetailsInput.bookId && data.book) {
           setBookId(idToUse);
           addResult('Updated stored book ID', { bookId: idToUse });
         }
@@ -497,7 +506,7 @@ export default function ApiTestFull() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left column - Test buttons */}
           <div className="grid grid-cols-1 gap-2">
-            
+
             <button
               className="bg-blue-500 text-white px-4 py-2 rounded"
               onClick={registerUser}
@@ -553,7 +562,7 @@ export default function ApiTestFull() {
               onClick={getBook}
               disabled={loading}
             >
-              <span className="mr-2">5. Get Book Details</span>
+              <span className="mr-2">5. Get Book{(bookId || bookDetailsInput.bookId) ? ' Details' : 's'}</span>
               {(bookId || bookDetailsInput.bookId) && (
                 <span className="text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full">
                   ID: {bookDetailsInput.bookId || bookId}
@@ -561,7 +570,7 @@ export default function ApiTestFull() {
               )}
               {!bookId && !bookDetailsInput.bookId && (
                 <span className="text-xs bg-yellow-500 text-white px-2 py-0.5 rounded-full">
-                  All Books
+                  GET /books (All Books)
                 </span>
               )}
             </button>
@@ -748,7 +757,7 @@ export default function ApiTestFull() {
                       value={bookDetailsInput.bookId}
                       onChange={handleBookDetailsInputChange}
                       min="1"
-                      placeholder={bookId ? `Current: ${bookId}` : "Enter book ID (optional)"}
+                      placeholder={bookId ? `Current: ${bookId}` : "Enter book ID or leave empty for all books"}
                       className="w-full p-2 border rounded"
                     />
                     {bookId && (
@@ -757,9 +766,20 @@ export default function ApiTestFull() {
                       </div>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Enter a book ID to fetch specific book details, leave empty to use the current book ID, or leave empty with no current ID to get all books.
-                  </p>
+                  <div className="flex justify-between mt-1">
+                    <p className="text-xs text-gray-500">
+                      Enter a book ID to fetch specific book details, leave empty to use the current book ID, or leave empty with no current ID to get all books.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setBookDetailsInput({...bookDetailsInput, bookId: ''});
+                        setBookId(null);
+                      }}
+                      className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded ml-2"
+                    >
+                      Clear ID
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
