@@ -42,6 +42,9 @@ export default function ApiTestFull() {
     bookId: ''
   });
 
+  // Search query state
+  const [searchQuery, setSearchQuery] = useState('');
+
   // Handle user form input changes
   const handleUserFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -70,6 +73,11 @@ export default function ApiTestFull() {
   const handleBookDetailsInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setBookDetailsInput(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Handle search query input change
+  const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
 
   // Add a result to the results array
@@ -423,12 +431,15 @@ export default function ApiTestFull() {
   const searchBooks = async () => {
     setLoading(true);
     try {
-      addResult('Searching for books with "Gatsby"...', null);
+      // Use the search query from state, or default to "Gatsby" if empty
+      const query = searchQuery.trim() || "Gatsby";
 
-      const response = await fetch('/api/search?q=Gatsby');
+      addResult(`Searching for books with "${query}"...`, null);
+
+      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
       const data = await response.json();
 
-      addResult('Search results for "Gatsby"', data);
+      addResult(`Search results for "${query}"`, data);
     } catch (error) {
       addResult('Error searching books', { error: error instanceof Error ? error.message : String(error) });
     } finally {
@@ -870,6 +881,26 @@ export default function ApiTestFull() {
                     placeholder="Enter genre"
                     className="w-full p-2 border rounded"
                   />
+                </div>
+              </div>
+            </div>
+
+            {/* Search Parameters */}
+            <div className="border p-4 rounded">
+              <h3 className="font-semibold mb-2">Search Books</h3>
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-sm mb-1">Search Query (Title or Author)</label>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={handleSearchQueryChange}
+                    placeholder="Enter search term (e.g., Gatsby, Fitzgerald)"
+                    className="w-full p-2 border rounded"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Search is case-insensitive and will match partial words in both title and author fields.
+                  </p>
                 </div>
               </div>
             </div>
