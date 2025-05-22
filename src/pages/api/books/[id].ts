@@ -32,6 +32,9 @@ export default async function handler(
 
       const reviewsResult = await ReviewModel.getByBookId(bookId, page, limit);
 
+      // Log the reviews for debugging
+      console.log(`Found ${reviewsResult.total} reviews for book ${bookId}`);
+
       // Try to get current user from token (if available)
       let currentUser = null;
       try {

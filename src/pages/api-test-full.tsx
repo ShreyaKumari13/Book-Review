@@ -343,7 +343,11 @@ export default function ApiTestFull() {
         // If no ID is provided, get all books instead
         addResult('No specific book ID provided. Getting all books...', null);
 
-        const response = await fetch('/api/books');
+        const response = await fetch('/api/books', {
+          headers: token ? {
+            'Authorization': `Bearer ${token}`,
+          } : {},
+        });
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -369,7 +373,11 @@ export default function ApiTestFull() {
         // Get specific book by ID
         addResult(`Getting book with ID ${idToUse}...`, null);
 
-        const response = await fetch(`/api/books/${idToUse}`);
+        const response = await fetch(`/api/books/${idToUse}`, {
+          headers: token ? {
+            'Authorization': `Bearer ${token}`,
+          } : {},
+        });
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -511,7 +519,11 @@ export default function ApiTestFull() {
 
       try {
         // First, get the book details which should include reviews
-        const response = await fetch(`/api/books/${bookIdToUse}`);
+        const response = await fetch(`/api/books/${bookIdToUse}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
 
         if (!response.ok) {
           throw new Error(`Failed to get book with ID ${bookIdToUse}`);
@@ -522,15 +534,15 @@ export default function ApiTestFull() {
         // Log the full response data for debugging
         addResult('Book details retrieved for update', {
           bookId: bookIdToUse,
-          hasReviews: !!(data.book && data.book.reviews && data.book.reviews.length > 0),
-          reviewCount: data.book?.reviews?.length || 0,
+          hasReviews: !!(data.reviews && data.reviews.length > 0),
+          reviewCount: data.reviews?.length || 0,
           currentUser: data.currentUser || null
         });
 
-        if (data.book && data.book.reviews && data.book.reviews.length > 0) {
+        if (data.reviews && data.reviews.length > 0) {
           // Show all reviews for debugging
           addResult('All reviews for this book', {
-            reviews: data.book.reviews.map((r: any) => ({
+            reviews: data.reviews.map((r: any) => ({
               id: r.id,
               user_id: r.user_id,
               rating: r.rating,
@@ -540,7 +552,7 @@ export default function ApiTestFull() {
 
           // If we're logged in, try to find our review
           if (data.currentUser && data.currentUser.id) {
-            const userReview = data.book.reviews.find((review: any) => review.user_id === data.currentUser.id);
+            const userReview = data.reviews.find((review: any) => review.user_id === data.currentUser.id);
 
             if (userReview) {
               idToUse = userReview.id;
@@ -553,7 +565,7 @@ export default function ApiTestFull() {
             } else {
               // If we can't find a review by the current user, just use the first review
               // This is for testing purposes - in a real app, you'd only allow users to update their own reviews
-              const firstReview = data.book.reviews[0];
+              const firstReview = data.reviews[0];
               idToUse = firstReview.id;
               setReviewId(idToUse);
               addResult('Using first available review', {
@@ -564,7 +576,7 @@ export default function ApiTestFull() {
             }
           } else {
             // If we're not logged in or can't determine the current user, just use the first review
-            const firstReview = data.book.reviews[0];
+            const firstReview = data.reviews[0];
             idToUse = firstReview.id;
             setReviewId(idToUse);
             addResult('Using first available review', {
@@ -701,7 +713,11 @@ export default function ApiTestFull() {
 
       try {
         // First, get the book details which should include reviews
-        const response = await fetch(`/api/books/${bookIdToUse}`);
+        const response = await fetch(`/api/books/${bookIdToUse}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
 
         if (!response.ok) {
           throw new Error(`Failed to get book with ID ${bookIdToUse}`);
@@ -712,15 +728,15 @@ export default function ApiTestFull() {
         // Log the full response data for debugging
         addResult('Book details retrieved', {
           bookId: bookIdToUse,
-          hasReviews: !!(data.book && data.book.reviews && data.book.reviews.length > 0),
-          reviewCount: data.book?.reviews?.length || 0,
+          hasReviews: !!(data.reviews && data.reviews.length > 0),
+          reviewCount: data.reviews?.length || 0,
           currentUser: data.currentUser || null
         });
 
-        if (data.book && data.book.reviews && data.book.reviews.length > 0) {
+        if (data.reviews && data.reviews.length > 0) {
           // Show all reviews for debugging
           addResult('All reviews for this book', {
-            reviews: data.book.reviews.map((r: any) => ({
+            reviews: data.reviews.map((r: any) => ({
               id: r.id,
               user_id: r.user_id,
               rating: r.rating,
@@ -730,7 +746,7 @@ export default function ApiTestFull() {
 
           // If we're logged in, try to find our review
           if (data.currentUser && data.currentUser.id) {
-            const userReview = data.book.reviews.find((review: any) => review.user_id === data.currentUser.id);
+            const userReview = data.reviews.find((review: any) => review.user_id === data.currentUser.id);
 
             if (userReview) {
               idToUse = userReview.id;
@@ -743,7 +759,7 @@ export default function ApiTestFull() {
             } else {
               // If we can't find a review by the current user, just use the first review
               // This is for testing purposes - in a real app, you'd only allow users to delete their own reviews
-              const firstReview = data.book.reviews[0];
+              const firstReview = data.reviews[0];
               idToUse = firstReview.id;
               setReviewId(idToUse);
               addResult('Using first available review', {
@@ -754,7 +770,7 @@ export default function ApiTestFull() {
             }
           } else {
             // If we're not logged in or can't determine the current user, just use the first review
-            const firstReview = data.book.reviews[0];
+            const firstReview = data.reviews[0];
             idToUse = firstReview.id;
             setReviewId(idToUse);
             addResult('Using first available review', {
