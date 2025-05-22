@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Geist, Geist_Mono } from "next/font/google";
+import { useState } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,6 +13,31 @@ const geistMono = Geist_Mono({
 });
 
 export default function Home() {
+  const [dbStatus, setDbStatus] = useState<{
+    success?: boolean;
+    message?: string;
+    timestamp?: string;
+    error?: string;
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const testDatabaseConnection = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/db-test');
+      const data = await response.json();
+      setDbStatus(data);
+    } catch (error) {
+      setDbStatus({
+        success: false,
+        message: 'Error testing connection',
+        error: error instanceof Error ? error.message : String(error)
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div
       className={`${geistSans.className} ${geistMono.className} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
@@ -61,7 +87,23 @@ export default function Home() {
           >
             Read our docs
           </a>
+          <button
+            onClick={testDatabaseConnection}
+            disabled={loading}
+            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto"
+          >
+            {loading ? 'Testing...' : 'Test Database Connection'}
+          </button>
         </div>
+
+        {dbStatus && (
+          <div className={`mt-4 p-4 rounded-md ${dbStatus.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            <h3 className="font-bold">{dbStatus.success ? 'Connection Successful!' : 'Connection Failed'}</h3>
+            <p>{dbStatus.message}</p>
+            {dbStatus.timestamp && <p>Server time: {dbStatus.timestamp}</p>}
+            {dbStatus.error && <p className="text-red-600">Error: {dbStatus.error}</p>}
+          </div>
+        )}
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
         <a
