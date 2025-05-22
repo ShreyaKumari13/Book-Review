@@ -400,16 +400,37 @@ export default function ApiTestFull() {
     }
   };
 
+  // Search query state
+  const [searchQuery, setSearchQuery] = useState('Gatsby');
+
+  // Handle search query change
+  const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
   // Search for books
   const searchBooks = async () => {
     setLoading(true);
     try {
-      addResult('Searching for books with "Gatsby"...', null);
+      if (!searchQuery.trim()) {
+        addResult('Error: Search query is empty', { error: 'Please enter a search term' });
+        setLoading(false);
+        return;
+      }
 
-      const response = await fetch('/api/search?q=Gatsby');
+      addResult(`Searching for books with "${searchQuery}"...`, { query: searchQuery });
+
+      // Encode the search query for URL
+      const encodedQuery = encodeURIComponent(searchQuery);
+      const response = await fetch(`/api/search?q=${encodedQuery}`);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to search books');
+      }
+
       const data = await response.json();
-
-      addResult('Search results for "Gatsby"', data);
+      addResult(`Search results for "${searchQuery}"`, data);
     } catch (error) {
       addResult('Error searching books', { error: error instanceof Error ? error.message : String(error) });
     } finally {
@@ -454,6 +475,7 @@ export default function ApiTestFull() {
       review: reviewForm
     });
 
+    await setupDatabase();
     await registerUser();
     await login();
     await addBooks();
@@ -551,14 +573,14 @@ export default function ApiTestFull() {
               onClick={getBooks}
               disabled={loading}
             >
-              4. Get Books (with filters)
+              5. Get Books (with filters)
             </button>
             <button
               className="bg-blue-500 text-white px-4 py-2 rounded flex items-center justify-center"
               onClick={getBook}
               disabled={loading}
             >
-              <span className="mr-2">5. Get Book Details</span>
+              <span className="mr-2">6. Get Book Details</span>
               {(bookId || bookDetailsInput.bookId) && (
                 <span className="text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full">
                   ID: {bookDetailsInput.bookId || bookId}
@@ -575,7 +597,7 @@ export default function ApiTestFull() {
               onClick={addReview}
               disabled={loading || !token || !bookId}
             >
-              <span className="mr-2">6. Add Review</span>
+              <span className="mr-2">7. Add Review</span>
               {!token && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">Login Required</span>}
               {!bookId && token && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Book ID Required</span>}
               {token && bookId && !loading && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -587,7 +609,7 @@ export default function ApiTestFull() {
               onClick={updateReview}
               disabled={loading || !token || !reviewId}
             >
-              <span className="mr-2">7. Update Review</span>
+              <span className="mr-2">8. Update Review</span>
               {!token && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">Login Required</span>}
               {!reviewId && token && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Review ID Required</span>}
               {token && reviewId && !loading && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -599,14 +621,14 @@ export default function ApiTestFull() {
               onClick={searchBooks}
               disabled={loading}
             >
-              8. Search Books
+              9. Search Books
             </button>
             <button
               className={`${!token || !reviewId ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600'} text-white px-4 py-2 rounded flex items-center justify-center`}
               onClick={deleteReview}
               disabled={loading || !token || !reviewId}
             >
-              <span className="mr-2">9. Delete Review</span>
+              <span className="mr-2">10. Delete Review</span>
               {!token && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">Login Required</span>}
               {!reviewId && token && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Review ID Required</span>}
               {token && reviewId && !loading && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -765,6 +787,23 @@ export default function ApiTestFull() {
                   <p className="text-xs text-gray-500 mt-1">
                     Enter a book ID to fetch specific book details, leave empty to use the current book ID, or leave empty with no current ID to get all books.
                   </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Search Parameters */}
+            <div className="border p-4 rounded mb-4">
+              <h3 className="font-semibold mb-2">Search Parameters</h3>
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-sm mb-1">Search Query</label>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={handleSearchQueryChange}
+                    placeholder="Enter search term (title or author)"
+                    className="w-full p-2 border rounded"
+                  />
                 </div>
               </div>
             </div>
