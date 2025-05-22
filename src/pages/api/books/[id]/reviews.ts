@@ -8,7 +8,8 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   const bookId = parseInt(id as string);
 
   if (isNaN(bookId)) {
-    return res.status(400).json({ error: 'Invalid book ID' });
+    res.status(400).json({ error: 'Invalid book ID' });
+    return;
   }
 
   // POST /books/:id/reviews - Submit a review (authenticated users only)
@@ -16,24 +17,27 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
     try {
       const userId = parseInt(req.user!.userId);
       const { rating, comment } = req.body;
-      
+
       // Validate rating
       if (!rating || isNaN(parseInt(rating)) || parseInt(rating) < 1 || parseInt(rating) > 5) {
-        return res.status(400).json({ error: 'Rating must be a number between 1 and 5' });
+        res.status(400).json({ error: 'Rating must be a number between 1 and 5' });
+        return;
       }
-      
+
       // Check if book exists
       const book = await BookModel.findById(bookId);
       if (!book) {
-        return res.status(404).json({ error: 'Book not found' });
+        res.status(404).json({ error: 'Book not found' });
+        return;
       }
-      
+
       // Check if user has already reviewed this book
       const hasReviewed = await ReviewModel.hasUserReviewedBook(userId, bookId);
       if (hasReviewed) {
-        return res.status(409).json({ error: 'You have already reviewed this book' });
+        res.status(409).json({ error: 'You have already reviewed this book' });
+        return;
       }
-      
+
       // Create review
       const reviewInput: ReviewInput = {
         book_id: bookId,
@@ -41,16 +45,16 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
         rating: parseInt(rating),
         comment
       };
-      
+
       const newReview = await ReviewModel.create(reviewInput);
-      
-      return res.status(201).json({
+
+      res.status(201).json({
         message: 'Review submitted successfully',
         review: newReview
       });
     } catch (error) {
       console.error('Error submitting review:', error);
-      return res.status(500).json({ 
+      res.status(500).json({
         error: 'Internal server error',
         details: error instanceof Error ? error.message : String(error)
       });

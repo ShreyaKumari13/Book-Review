@@ -15,7 +15,7 @@ async function getBooks(req: NextApiRequest, res: NextApiResponse) {
       limit: limit ? parseInt(limit as string) : 10
     });
 
-    return res.status(200).json({
+    res.status(200).json({
       books: result.books,
       pagination: {
         total: result.total,
@@ -26,7 +26,7 @@ async function getBooks(req: NextApiRequest, res: NextApiResponse) {
     });
   } catch (error) {
     console.error('Error fetching books:', error);
-    return res.status(500).json({
+    res.status(500).json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : String(error)
     });
@@ -40,12 +40,14 @@ async function addBook(req: AuthenticatedRequest, res: NextApiResponse) {
 
     // Validate required fields
     if (!title || !author) {
-      return res.status(400).json({ error: 'Title and author are required' });
+      res.status(400).json({ error: 'Title and author are required' });
+      return;
     }
 
     // Ensure user is authenticated
     if (!req.user || !req.user.userId) {
-      return res.status(401).json({ error: 'Authentication required' });
+      res.status(401).json({ error: 'Authentication required' });
+      return;
     }
 
     // Create book input
@@ -61,13 +63,13 @@ async function addBook(req: AuthenticatedRequest, res: NextApiResponse) {
     // Create the book
     const newBook = await BookModel.create(bookInput);
 
-    return res.status(201).json({
+    res.status(201).json({
       message: 'Book created successfully',
       book: newBook
     });
   } catch (error) {
     console.error('Error creating book:', error);
-    return res.status(500).json({
+    res.status(500).json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : String(error)
     });
@@ -89,12 +91,12 @@ const protectedHandler = withAuth(async (req: AuthenticatedRequest, res: NextApi
 // Main handler that routes to the appropriate function based on the HTTP method
 export default async function booksHandler(req: NextApiRequest | AuthenticatedRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
-    return getBooks(req, res);
+    await getBooks(req, res);
   } else if (req.method === 'POST') {
     // For POST requests, use the protected handler with authentication
-    return protectedHandler(req as AuthenticatedRequest, res);
+    await protectedHandler(req as AuthenticatedRequest, res);
   } else {
     res.setHeader('Allow', ['GET', 'POST']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }

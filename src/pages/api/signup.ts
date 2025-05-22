@@ -8,7 +8,8 @@ export default async function handler(
 ) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
+    return;
   }
 
   try {
@@ -16,24 +17,28 @@ export default async function handler(
 
     // Validate input
     if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Name, email, and password are required' });
+      res.status(400).json({ error: 'Name, email, and password are required' });
+      return;
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).json({ error: 'Invalid email format' });
+      res.status(400).json({ error: 'Invalid email format' });
+      return;
     }
 
     // Validate password strength
     if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+      res.status(400).json({ error: 'Password must be at least 6 characters long' });
+      return;
     }
 
     // Check if user already exists
     const existingUser = await UserModel.findByEmail(email);
     if (existingUser) {
-      return res.status(409).json({ error: 'Email already in use' });
+      res.status(409).json({ error: 'Email already in use' });
+      return;
     }
 
     // Create new user
@@ -47,7 +52,7 @@ export default async function handler(
     });
 
     // Return success response with token
-    return res.status(201).json({
+    res.status(201).json({
       message: 'User registered successfully',
       token,
       user: {
@@ -58,7 +63,7 @@ export default async function handler(
     });
   } catch (error) {
     console.error('Registration error:', error);
-    return res.status(500).json({ 
+    res.status(500).json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : String(error)
     });

@@ -7,26 +7,28 @@ export default async function handler(
 ) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', ['GET']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
+    return;
   }
 
   try {
     const { q, page, limit } = req.query;
-    
+
     if (!q || typeof q !== 'string') {
-      return res.status(400).json({ error: 'Search query is required' });
+      res.status(400).json({ error: 'Search query is required' });
+      return;
     }
-    
+
     const pageNum = page ? parseInt(page as string) : 1;
     const limitNum = limit ? parseInt(limit as string) : 10;
-    
+
     const result = await BookModel.search(
       q,
       pageNum,
       limitNum
     );
-    
-    return res.status(200).json({
+
+    res.status(200).json({
       books: result.books,
       pagination: {
         total: result.total,
@@ -37,7 +39,7 @@ export default async function handler(
     });
   } catch (error) {
     console.error('Search error:', error);
-    return res.status(500).json({ 
+    res.status(500).json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : String(error)
     });

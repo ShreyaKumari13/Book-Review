@@ -8,7 +8,8 @@ export default async function handler(
 ) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
+    return;
   }
 
   try {
@@ -16,19 +17,22 @@ export default async function handler(
 
     // Validate input
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+      res.status(400).json({ error: 'Email and password are required' });
+      return;
     }
 
     // Find user by email
     const user = await UserModel.findByEmail(email);
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      res.status(401).json({ error: 'Invalid credentials' });
+      return;
     }
 
     // Verify password
     const isPasswordValid = await UserModel.verifyPassword(password, user.password!);
     if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      res.status(401).json({ error: 'Invalid credentials' });
+      return;
     }
 
     // Generate JWT token
@@ -39,7 +43,7 @@ export default async function handler(
     });
 
     // Return success response with token
-    return res.status(200).json({
+    res.status(200).json({
       message: 'Login successful',
       token,
       user: {
@@ -50,7 +54,7 @@ export default async function handler(
     });
   } catch (error) {
     console.error('Login error:', error);
-    return res.status(500).json({ 
+    res.status(500).json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : String(error)
     });

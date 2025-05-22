@@ -10,7 +10,8 @@ export default async function handler(
   const bookId = parseInt(id as string);
 
   if (isNaN(bookId)) {
-    return res.status(400).json({ error: 'Invalid book ID' });
+    res.status(400).json({ error: 'Invalid book ID' });
+    return;
   }
 
   // GET /books/:id - Get book details by ID
@@ -18,18 +19,19 @@ export default async function handler(
     try {
       // Get book details
       const book = await BookModel.findById(bookId);
-      
+
       if (!book) {
-        return res.status(404).json({ error: 'Book not found' });
+        res.status(404).json({ error: 'Book not found' });
+        return;
       }
 
       // Get reviews with pagination
       const page = req.query.page ? parseInt(req.query.page as string) : 1;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
-      
+
       const reviewsResult = await ReviewModel.getByBookId(bookId, page, limit);
-      
-      return res.status(200).json({
+
+      res.status(200).json({
         book,
         reviews: reviewsResult.reviews,
         pagination: {
@@ -41,7 +43,7 @@ export default async function handler(
       });
     } catch (error) {
       console.error('Error fetching book details:', error);
-      return res.status(500).json({ 
+      res.status(500).json({
         error: 'Internal server error',
         details: error instanceof Error ? error.message : String(error)
       });

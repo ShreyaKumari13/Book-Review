@@ -22,24 +22,26 @@ export function withAuth(handler: AuthHandler): NextApiHandler {
       const token = extractTokenFromHeader(authHeader);
 
       if (!token) {
-        return res.status(401).json({ error: 'Authentication token is required' });
+        res.status(401).json({ error: 'Authentication token is required' });
+        return;
       }
 
       // Verify token
       const decodedToken = verifyToken(token);
-      
+
       if (!decodedToken) {
-        return res.status(401).json({ error: 'Invalid or expired token' });
+        res.status(401).json({ error: 'Invalid or expired token' });
+        return;
       }
 
       // Add user information to request
       (req as AuthenticatedRequest).user = decodedToken;
 
       // Call the original handler
-      return await handler(req as AuthenticatedRequest, res);
+      await handler(req as AuthenticatedRequest, res);
     } catch (error) {
       console.error('Authentication error:', error);
-      return res.status(500).json({ error: 'Internal server error during authentication' });
+      res.status(500).json({ error: 'Internal server error during authentication' });
     }
   };
 }
