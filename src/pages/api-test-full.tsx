@@ -286,10 +286,32 @@ export default function ApiTestFull() {
       const queryString = queryParams.toString();
       const url = `/api/books${queryString ? `?${queryString}` : ''}`;
 
-      addResult('Getting books with parameters...', bookListParams);
+      addResult('Getting books with parameters...', {
+        ...bookListParams,
+        endpoint: url,
+        method: 'GET'
+      });
 
       const response = await fetch(url);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get books');
+      }
+
       const data = await response.json();
+
+      // Display information about the books without automatically selecting one
+      if (data.books && data.books.length > 0) {
+        addResult('Books found', {
+          count: data.books.length,
+          message: 'To add a review, please enter a specific book ID in the Book Details Input field or click on a specific book'
+        });
+      } else {
+        addResult('No books found', {
+          message: 'Please add books first before trying to add reviews'
+        });
+      }
 
       addResult('Books result', data);
     } catch (error) {
@@ -311,14 +333,24 @@ export default function ApiTestFull() {
         addResult('No specific book ID provided. Getting all books...', null);
 
         const response = await fetch('/api/books');
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to get books');
+        }
+
         const data = await response.json();
 
-        // If we get books back and there's at least one book, set the first book's ID
-        // This helps with the flow of testing by automatically selecting a book
+        // Display information about the books without automatically selecting one
         if (data.books && data.books.length > 0) {
-          const firstBookId = data.books[0].id;
-          setBookId(firstBookId);
-          addResult('Automatically selected first book', { bookId: firstBookId });
+          addResult('Books found', {
+            count: data.books.length,
+            message: 'To add a review, please enter a specific book ID in the Book Details Input field or click on a specific book'
+          });
+        } else {
+          addResult('No books found', {
+            message: 'Please add books first before trying to add reviews'
+          });
         }
 
         addResult('All books (no specific ID provided)', data);
@@ -342,7 +374,10 @@ export default function ApiTestFull() {
 
           // Only log if we're changing the ID
           if (bookId !== idToUse) {
-            addResult('Updated stored book ID', { bookId: idToUse });
+            addResult('Updated stored book ID for review operations', {
+              bookId: idToUse,
+              message: 'You can now add reviews to this book'
+            });
           }
         }
 
@@ -357,16 +392,56 @@ export default function ApiTestFull() {
 
   // Add a review
   const addReview = async () => {
-    if (!bookId) {
-      addResult('Cannot add review', { error: 'No book ID available' });
+    // Use the book ID from the input field if available, otherwise use the stored bookId
+    const idToUse = bookDetailsInput.bookId ? parseInt(bookDetailsInput.bookId) : bookId;
+
+    if (!idToUse) {
+      addResult('Cannot add review', {
+        error: 'No book ID available',
+        message: 'Please enter a book ID in the Book Details Input field or select a specific book first'
+      });
       return;
+    }
+
+    if (!token) {
+      addResult('Cannot add review', {
+        error: 'Not authenticated',
+        message: 'Please login first'
+      });
+      return;
+    }
+
+    // Update the stored bookId to match what we're using
+    if (bookId !== idToUse) {
+      setBookId(idToUse);
+      addResult('Updated book ID for review', {
+        bookId: idToUse,
+        message: 'Using the book ID from the input field'
+      });
     }
 
     setLoading(true);
     try {
-      addResult(`Adding review for book ID ${bookId}...`, reviewForm);
+      // Validate review data
+      const ratingNum = parseInt(reviewForm.rating);
+      if (!ratingNum || ratingNum < 1 || ratingNum > 5) {
+        throw new Error('Rating must be between 1 and 5');
+      }
 
-      const response = await fetch(`/api/books/${bookId}/reviews`, {
+      if (!reviewForm.comment.trim()) {
+        throw new Error('Comment cannot be empty');
+      }
+
+      addResult(`Adding review for book ID ${idToUse}...`, {
+        endpoint: `/api/books/${idToUse}/reviews`,
+        method: 'POST',
+        data: {
+          rating: parseInt(reviewForm.rating),
+          comment: reviewForm.comment
+        }
+      });
+
+      const response = await fetch(`/api/books/${idToUse}/reviews`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -379,11 +454,19 @@ export default function ApiTestFull() {
       });
 
       const data = await response.json();
-      addResult('Review added', data);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to add review');
+      }
+
+      addResult('Review added successfully ✅', data);
 
       if (data.review && data.review.id) {
         setReviewId(data.review.id);
-        addResult('Saved review ID for testing', { reviewId: data.review.id });
+        addResult('Saved review ID for update/delete operations', {
+          reviewId: data.review.id,
+          message: 'You can now update or delete this review'
+        });
       }
     } catch (error) {
       addResult('Error adding review', { error: error instanceof Error ? error.message : String(error) });
@@ -395,19 +478,44 @@ export default function ApiTestFull() {
   // Update a review
   const updateReview = async () => {
     if (!reviewId) {
-      addResult('Cannot update review', { error: 'No review ID available' });
+      addResult('Cannot update review', {
+        error: 'No review ID available',
+        message: 'Please add a review first or select a book with your review'
+      });
+      return;
+    }
+
+    if (!token) {
+      addResult('Cannot update review', {
+        error: 'Not authenticated',
+        message: 'Please login first'
+      });
       return;
     }
 
     setLoading(true);
     try {
+      // Validate review data
+      const ratingNum = parseInt(reviewForm.rating);
+      if (!ratingNum || ratingNum < 1 || ratingNum > 5) {
+        throw new Error('Rating must be between 1 and 5');
+      }
+
+      if (!reviewForm.comment.trim()) {
+        throw new Error('Comment cannot be empty');
+      }
+
       // Create updated review data
       const updatedReview = {
-        rating: parseInt(reviewForm.rating),
+        rating: ratingNum,
         comment: `Updated: ${reviewForm.comment}`
       };
 
-      addResult(`Updating review with ID ${reviewId}...`, updatedReview);
+      addResult(`Updating review with ID ${reviewId}...`, {
+        endpoint: `/api/reviews/${reviewId}`,
+        method: 'PUT',
+        data: updatedReview
+      });
 
       const response = await fetch(`/api/reviews/${reviewId}`, {
         method: 'PUT',
@@ -419,7 +527,12 @@ export default function ApiTestFull() {
       });
 
       const data = await response.json();
-      addResult('Review updated', data);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update review');
+      }
+
+      addResult('Review updated successfully ✅', data);
     } catch (error) {
       addResult('Error updating review', { error: error instanceof Error ? error.message : String(error) });
     } finally {
@@ -450,13 +563,27 @@ export default function ApiTestFull() {
   // Delete a review
   const deleteReview = async () => {
     if (!reviewId) {
-      addResult('Cannot delete review', { error: 'No review ID available' });
+      addResult('Cannot delete review', {
+        error: 'No review ID available',
+        message: 'Please add a review first or select a book with your review'
+      });
+      return;
+    }
+
+    if (!token) {
+      addResult('Cannot delete review', {
+        error: 'Not authenticated',
+        message: 'Please login first'
+      });
       return;
     }
 
     setLoading(true);
     try {
-      addResult(`Deleting review with ID ${reviewId}...`, null);
+      addResult(`Deleting review with ID ${reviewId}...`, {
+        endpoint: `/api/reviews/${reviewId}`,
+        method: 'DELETE'
+      });
 
       const response = await fetch(`/api/reviews/${reviewId}`, {
         method: 'DELETE',
@@ -466,8 +593,18 @@ export default function ApiTestFull() {
       });
 
       const data = await response.json();
-      addResult('Review deleted', data);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete review');
+      }
+
+      addResult('Review deleted successfully ✅', data);
+
+      // Clear the review ID since it no longer exists
       setReviewId(null);
+      addResult('Cleared review ID', {
+        message: 'The review ID has been cleared since the review no longer exists'
+      });
     } catch (error) {
       addResult('Error deleting review', { error: error instanceof Error ? error.message : String(error) });
     } finally {
@@ -489,6 +626,34 @@ export default function ApiTestFull() {
     await login();
     await addBooks();
     await getBooks();
+
+    // For the automated test, we need to explicitly get a specific book
+    // to ensure we have a book ID for the review operations
+    if (!bookId && !bookDetailsInput.bookId) {
+      addResult('Setting up book ID for automated test', {
+        message: 'Getting the first book to use for review operations'
+      });
+
+      try {
+        const response = await fetch('/api/books');
+        const data = await response.json();
+
+        if (data.books && data.books.length > 0) {
+          const firstBookId = data.books[0].id;
+          setBookId(firstBookId);
+          addResult('Selected first book for automated test', { bookId: firstBookId });
+        } else {
+          addResult('Warning: No books found for automated test', {
+            message: 'Review operations may fail'
+          });
+        }
+      } catch (error) {
+        addResult('Error setting up book ID for automated test', {
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
+
     await getBook();
     await addReview();
     await getBook(); // Get book again to see the review
@@ -596,23 +761,21 @@ export default function ApiTestFull() {
               )}
             </button>
             <button
-              className={`${!token || !bookId ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'} text-white px-4 py-2 rounded flex items-center justify-center relative`}
+              className={`${!token || (!bookId && !bookDetailsInput.bookId) ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'} text-white px-4 py-2 rounded flex items-center justify-center relative`}
               onClick={addReview}
-              disabled={loading || !token || !bookId}
+              disabled={loading || !token || (!bookId && !bookDetailsInput.bookId)}
             >
               <span className="mr-2">6. Add Review</span>
               {!token && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">Login Required</span>}
-              {!bookId && token && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Book ID Required</span>}
-              {token && bookId && !loading && (
+              {!bookId && !bookDetailsInput.bookId && token && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Book ID Required</span>}
+              {token && (bookId || bookDetailsInput.bookId) && !loading && (
                 <>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clipRule="evenodd" />
                   </svg>
-                  {bookId && (
-                    <span className="absolute -top-1 -right-1 text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full">
-                      Book ID: {bookId}
-                    </span>
-                  )}
+                  <span className="absolute -top-1 -right-1 text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full">
+                    POST /books/{bookDetailsInput.bookId || bookId}/reviews
+                  </span>
                 </>
               )}
             </button>
@@ -631,7 +794,7 @@ export default function ApiTestFull() {
                   </svg>
                   {reviewId && (
                     <span className="absolute -top-1 -right-1 text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full">
-                      Review ID: {reviewId}
+                      PUT /reviews/{reviewId}
                     </span>
                   )}
                 </>
@@ -659,7 +822,7 @@ export default function ApiTestFull() {
                   </svg>
                   {reviewId && (
                     <span className="absolute -top-1 -right-1 text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full">
-                      Review ID: {reviewId}
+                      DELETE /reviews/{reviewId}
                     </span>
                   )}
                 </>
