@@ -41,7 +41,7 @@ export function generateToken(user: User, expiresIn: string = '7d'): string {
     role: user.role,
   };
 
-  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
+  return jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, { expiresIn } as jwt.SignOptions);
 }
 
 /**
