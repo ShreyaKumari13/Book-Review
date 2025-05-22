@@ -822,6 +822,27 @@ export default function ApiTestFull() {
                 </div>
               </div>
             </div>
+
+            {/* Search Parameters */}
+            <div className="border p-4 rounded">
+              <h3 className="font-semibold mb-2">Search Books</h3>
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-sm mb-1">Search Query (Title or Author)</label>
+                  <input
+                    type="text"
+                    name="query"
+                    value={searchInput.query}
+                    onChange={handleSearchInputChange}
+                    placeholder="Enter search term"
+                    className="w-full p-2 border rounded"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter a search term to find books by title or author (case-insensitive, partial match)
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
