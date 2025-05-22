@@ -454,7 +454,6 @@ export default function ApiTestFull() {
       review: reviewForm
     });
 
-    await setupDatabase();
     await registerUser();
     await login();
     await addBooks();
@@ -552,14 +551,14 @@ export default function ApiTestFull() {
               onClick={getBooks}
               disabled={loading}
             >
-              5. Get Books (with filters)
+              4. Get Books (with filters)
             </button>
             <button
               className="bg-blue-500 text-white px-4 py-2 rounded flex items-center justify-center"
               onClick={getBook}
               disabled={loading}
             >
-              <span className="mr-2">6. Get Book Details</span>
+              <span className="mr-2">5. Get Book Details</span>
               {(bookId || bookDetailsInput.bookId) && (
                 <span className="text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full">
                   ID: {bookDetailsInput.bookId || bookId}
@@ -576,7 +575,7 @@ export default function ApiTestFull() {
               onClick={addReview}
               disabled={loading || !token || !bookId}
             >
-              <span className="mr-2">7. Add Review</span>
+              <span className="mr-2">6. Add Review</span>
               {!token && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">Login Required</span>}
               {!bookId && token && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Book ID Required</span>}
               {token && bookId && !loading && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -588,7 +587,7 @@ export default function ApiTestFull() {
               onClick={updateReview}
               disabled={loading || !token || !reviewId}
             >
-              <span className="mr-2">8. Update Review</span>
+              <span className="mr-2">7. Update Review</span>
               {!token && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">Login Required</span>}
               {!reviewId && token && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Review ID Required</span>}
               {token && reviewId && !loading && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -600,14 +599,14 @@ export default function ApiTestFull() {
               onClick={searchBooks}
               disabled={loading}
             >
-              9. Search Books
+              8. Search Books
             </button>
             <button
               className={`${!token || !reviewId ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600'} text-white px-4 py-2 rounded flex items-center justify-center`}
               onClick={deleteReview}
               disabled={loading || !token || !reviewId}
             >
-              <span className="mr-2">10. Delete Review</span>
+              <span className="mr-2">9. Delete Review</span>
               {!token && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">Login Required</span>}
               {!reviewId && token && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">Review ID Required</span>}
               {token && reviewId && !loading && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -819,27 +818,6 @@ export default function ApiTestFull() {
                     placeholder="Enter genre"
                     className="w-full p-2 border rounded"
                   />
-                </div>
-              </div>
-            </div>
-
-            {/* Search Parameters */}
-            <div className="border p-4 rounded">
-              <h3 className="font-semibold mb-2">Search Books</h3>
-              <div className="space-y-2">
-                <div>
-                  <label className="block text-sm mb-1">Search Query (Title or Author)</label>
-                  <input
-                    type="text"
-                    name="query"
-                    value={searchInput.query}
-                    onChange={handleSearchInputChange}
-                    placeholder="Enter search term"
-                    className="w-full p-2 border rounded"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Enter a search term to find books by title or author (case-insensitive, partial match)
-                  </p>
                 </div>
               </div>
             </div>
