@@ -77,10 +77,12 @@ async function addBook(req: AuthenticatedRequest, res: NextApiResponse) {
 // Protected handler for POST requests
 const protectedHandler = withAuth(async (req: AuthenticatedRequest, res: NextApiResponse) => {
   if (req.method === 'POST') {
-    return addBook(req, res);
+    addBook(req, res);
+    return;
   } else {
     res.setHeader('Allow', ['POST']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
+    return;
   }
 });
 
